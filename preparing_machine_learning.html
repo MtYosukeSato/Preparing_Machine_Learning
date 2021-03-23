@@ -1,5 +1,6 @@
 <!--
 OpenCVの画像認識データを作成するために使うHTML
+クラスClsRubberBandは「プログラミングHTML5 Canvas」(オライリー)に載っているものがベースになっています。
 -->
 <html lang="ja">
     <head>
@@ -18,7 +19,6 @@ OpenCVの画像認識データを作成するために使うHTML
                 cursor: crosshair;
                 display: none;
             }
-
 
             #mouse_x_line,
             #mouse_y_line
@@ -208,8 +208,6 @@ OpenCVの画像認識データを作成するために使うHTML
             </div>
             -->
 
-
-
             <div id="box_download">
                 <!-- データダウンロードボタン -->
                 <button id="btn_DLtxt">テキストのダウンロード</button>
@@ -217,7 +215,6 @@ OpenCVの画像認識データを作成するために使うHTML
         </nav>
 
         <main>
-
             <!-- 画像ファイル用の表示-->
             <div id="box_canvas">
                 <canvas id='canvas' width='600' height="800">
@@ -232,9 +229,6 @@ OpenCVの画像認識データを作成するために使うHTML
         <div id="mouse_xy_px"></div>
         <div id="mouse_x_line"></div>
         <div id="mouse_y_line"></div>
-
-        
-        
     </body>
 
     <script>
@@ -261,7 +255,7 @@ OpenCVの画像認識データを作成するために使うHTML
 
                 //
                 this.canvas_position = this.canvas.getBoundingClientRect();
-                this.border_width = 3; //cssで設定しているボーダーサイズ
+                //this.border_width = 3; //cssで設定しているボーダーサイズ
 
                 this.is_canvas_inside = false;
 
@@ -350,8 +344,6 @@ OpenCVの画像認識データを作成するために使うHTML
                         this.rubberbandRectangle.height = Math.abs(y - this.mousedown.y);
                 }
 
-                ///やさしく動かしてください、などと記載してごまかす
-
                 this.moveRubberbandDiv();
                 this.resizeRubberbandDiv();
             };
@@ -373,7 +365,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 }
 
                 
-                //拡大表示はズレる（できれば、別ウィンドウなどに拡大表示させたい）
+                //拡大表示はズレる（別ウィンドウ機能に利用できそう）
                 // var bbox = this.canvas.getBoundingClientRect();
                 
                 // try{
@@ -471,7 +463,6 @@ OpenCVの画像認識データを作成するために使うHTML
                     my.moveRubberbandDiv();
                 }
 
-
                 //image.onload = function(image){
                 //    this.context.drawImage(image, 0, 0,  this.canvas.width,  this.canvas.height);
                 //}
@@ -520,8 +511,6 @@ OpenCVの画像認識データを作成するために使うHTML
             constructor(btn_id)
             {
                 this.btn_id = btn_id; //ボタンとして使うhtml inputのid
-                //this.dl_data = "ああああ";
-                
                 this.setClick();//ボタンクリックによるダウンロードの実行イベントを追加
                 this.id = 0;
             }
@@ -550,7 +539,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 document.getElementById(this.btn_id).onclick = function(){ my.download(my.dl_data);};
             }
 
-            //配列データをパースする関数////////////////////////
+            //配列データをパースする関数
             makeTxtFromArray()
             {
                 var data = "";
