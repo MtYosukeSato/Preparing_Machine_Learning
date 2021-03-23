@@ -1,0 +1,924 @@
+<!--
+OpenCVの画像認識データを作成するために使うHTML
+-->
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>正解の場所</title>
+        <style>
+            #rubberbandDiv{z-index: 4;}
+            #mouse_x_line,
+            #mouse_y_line{z-index: 3;}
+            #canvas{z-index: 2;}
+            nav{z-index: 5;}
+
+            #rubberbandDiv{
+                position:absolute;
+                border: 3px solid yellow;
+                cursor: crosshair;
+                display: none;
+            }
+
+
+            #mouse_x_line,
+            #mouse_y_line
+            {
+                position:absolute;
+                top:0;
+                left:0;
+                border-style: dashed;
+                border-color:#fff;
+                display: none;
+                background-color: transparent;
+                opacity: 0.7;
+            }
+            #mouse_x_line
+            {
+
+                border-width:1px 0 0 0;
+                width:100%;
+                height:1px;
+
+            }
+            #mouse_y_line
+            {
+                border-width:0 1px 0 0;
+                width:1px;
+                height:100%;
+            }
+            #mouse_xy_px
+            {
+                position: absolute;
+                color:#fff;
+                text-align: center;
+                width:150px;
+                background-color: #000;
+                opacity: 0.5;
+            }
+
+            body{
+                overflow-y:hidden;
+                height:100%;
+            }
+
+            #file_box{
+                position:relative;
+                top:0;
+                right:0;
+            }
+            nav{
+                position: absolute;
+                top:0;
+                right:0;
+                width:450px;
+                height:100%;
+                font-size:90%;
+                border-left:1px solid #efefef;
+                overflow:hidden;
+                background-color: #fff;
+            }
+
+            #box_download
+            {
+                position:absolute;
+                bottom:0;
+                left:0;
+            }
+
+            h1,p,#place_file_list{padding-left:5px;}
+
+
+            h1{
+                margin:0 0 5px 0;
+                padding-top:5px;
+            }
+            h1{ border-top:5px solid rgb(0, 122, 204);}
+            h1 span{font-size: 60%;font-weight: normal;position: relative;top:-2px;}
+            #place_file_list th,
+            #list_caption,
+            h1{
+                color:rgb(46, 98, 211);
+            }
+            #file_box,
+            #box_download
+            {
+                background-color: #f1f8fc;
+            }
+
+            p{
+                margin:5px 0 20px 0;
+                font-size: 85%;
+            }
+            /* ファイルの読み込み */
+            #file_box{margin-bottom:22px;
+                padding:0px 8px 1px 8px;}
+            #cssid_file_read{padding:10px 0 15px 0}
+            #cssid_file_read input{position: absolute;top:10px;}
+
+            /* マウス位置 */
+            #mouse_xy_px{
+                position:absolute;
+                bottom:0;
+                right:0;
+                display: none;
+                height:1.5em;
+            }
+
+            /* ファイルリスト */
+            #place_file_list {
+                position: relative;
+                overflow-y: scroll;
+                
+            }
+            /* データテーブルの見出し */
+            #list_caption{
+                margin-right:27px;
+                position:relative;
+                top:-5px;
+                left:3px;
+            }
+            #table_cap{display: none;}
+            #place_file_list table
+            {
+                border-collapse: collapse;
+                width: 100%;
+                border-right:5px solid #fff;/* mergin-right */
+            }
+
+            #place_file_list td,
+            #place_file_list th
+            {
+                border-bottom:1px solid #efefef;
+            }
+            td{text-align: right;}
+            .ta_f{
+                width:150px;
+                text-align: left;
+                overflow-wrap: break-word;
+                white-space: pre-line;
+            }
+            .ta_d{
+                width:75px;
+                text-align: right;
+            }
+            main{
+                padding:0;
+                margin: 0;
+            }
+            #box_canvas{
+                position: absolute;
+                top:0;
+                left:0;
+                height:100%;
+                overflow: scroll;
+                margin-right:450px;/*nav width:450px */
+            }
+            #box_download{
+                position:absolute;
+                bottom:0;
+                padding:12px 0;
+                width:100%;
+                height:25px;
+            }
+            #btn_DLtxt{margin-left:8px;}
+        </style>
+    </head>
+    <body>
+        <nav id="nav_size_for_js">
+            <h1>正解リストの作成 <span>(1画像につき正解1つ版)</span></h1>
+            <p>「ファイルの選択」から画像が保存されているフォルダを選び「アップロード」をクリックします。読み込み後は[ctrl+上]または[ctrl+下]で選択できます。
+                オブジェクト選択はマウスでドラッグして枠線を引きます。修正は枠線の外をクリック後に再度ドラッグで範囲選択してください。テキストのダウンロードをクリックすると
+                データが登録されているもののみファイルとして書き出されます。
+            </p>
+            <!-- フォルダの読み込み -->
+            <div id="file_box">
+                <p id="cssid_file_read"><!--　javascriptで書き込み <input  type="file"
+                    webkitdirectory directory                             
+                    onChange="cls_expl.fileListDirectory(this.files)"> --></p>
+            </div>
+            <div>
+                <table id="list_caption"><tr><th class='ta_f'>file_name</th><th class='ta_d'>x</th><th class='ta_d'>y</th><th class='ta_d'>width</th><th class='ta_d'>height</th></tr></table>
+            </div>
+            <div id="place_file_list">フォルダを読み込むとリストが表示されます。</div>
+
+
+            <!-- リセットボタン
+            <div id="controls">
+                <input type="button" id="resetButton" value="Reset">
+            </div>
+            -->
+
+
+
+            <div id="box_download">
+                <!-- データダウンロードボタン -->
+                <button id="btn_DLtxt">テキストのダウンロード</button>
+            </div>
+        </nav>
+
+        <main>
+
+            <!-- 画像ファイル用の表示-->
+            <div id="box_canvas">
+                <canvas id='canvas' width='600' height="800">
+                    Canvasがサポートされていないブラウザです。
+                </canvas>
+            </div>
+        </main>
+
+        <!-- 枠線表示 -->
+        <div id="rubberbandDiv"></div>
+        <!-- 現在のマウス位置） -->
+        <div id="mouse_xy_px"></div>
+        <div id="mouse_x_line"></div>
+        <div id="mouse_y_line"></div>
+
+        
+        
+    </body>
+
+    <script>
+        //イベント中のオブジェクトへの参照
+        let gb_event_reference = {};
+        //ファイルを取得したオブジェクト一覧
+        let gb_arr_path_file = {};
+        //読みだしたかのフラグ
+        let gb_flag_read = false;
+        //書き出すデータ
+        let gb_txt_data = '';
+
+        //四角を描くクラス
+        class ClsRubberBand{
+            constructor(canvas, context, evt_reference) {
+                this.canvas = canvas;
+                this.context = context;
+                this.rubberbandDiv = document.getElementById('rubberbandDiv'),
+                this.resetButton = document.getElementById('resetButton'),
+                this.mousedown = {},
+                this.rubberbandRectangle = {},
+                this.dragging = false;
+                this.setEvent();
+
+                //
+                this.canvas_position = this.canvas.getBoundingClientRect();
+                this.border_width = 3; //cssで設定しているボーダーサイズ
+
+                this.is_canvas_inside = false;
+
+                //マウスの情報表示
+                this.flag_mouse_info = false;
+                this.mouseInfo();
+            }
+
+            rubberbandStart(x,y){
+                this.rubberbandDiv.style.width = 0;
+                this.rubberbandDiv.style.height = 0;
+
+                this.mousedown.x = x;
+                this.mousedown.y = y;
+
+                this.rubberbandRectangle.left = this.mousedown.x;
+                this.rubberbandRectangle.top = this.mousedown.y;
+
+                this.moveRubberbandDiv();
+                this.showRubberbandDiv();
+
+                this.dragging = true;
+            }
+
+            rubberbandStretch(x,y){
+                let y_data = 0;
+                let x_data = 0;
+                
+                //yデータの補正
+                let up_down = 'up';
+                if(y < this.mousedown.y)
+                {
+                    up_down = 'up';
+                    y_data = y;
+                }else{
+                    up_down = 'down';
+                    y_data = this.mousedown.y;
+                }
+
+                let pos_nega = 'positive';
+                if(x < this.mousedown.x)
+                {
+                    pos_nega = 'negative';
+                    x_data = x;
+                }else{
+                    pos_nega = 'positive';
+                    x_data = this.mousedown.x;
+                }
+
+                //キャンバスのページ内表示位置の修正
+                let oL =  this.canvas.offsetLeft; 
+                let oT = this.canvas.offsetTop;
+                x_data = (oL > x_data) ? oL : x_data; //画像より左なら固定
+                y_data = (oT > y_data) ? oT : y_data; //画像より上なら固定
+                
+                this.rubberbandRectangle.left = x_data;
+                this.rubberbandRectangle.top = y_data;
+
+                //幅補正
+                if(pos_nega == 'negative')
+                {
+                    if((x_data - oL) > 0)
+                    {
+                        this.rubberbandRectangle.width = Math.abs(x - this.mousedown.x);
+                    }
+                }
+                else
+                {
+                    ////すばやく動かすと端までいかない
+                    if(x_data - oL + Math.abs(x - this.mousedown.x) <= this.canvas.width)// - this.border_width) //これを入れると表示はいいがデータがずれる
+                        this.rubberbandRectangle.width = Math.abs(x - this.mousedown.x);
+                }
+
+               //高さ補正
+                if(up_down == 'up')
+                {
+                    ////原因がわからない・・・バグ///すばやく動かすとずれる
+                    if((y_data - oT) > 0)
+                    {
+                        this.rubberbandRectangle.height = Math.abs(y - this.mousedown.y);
+                    }
+                }
+                else
+                {
+                    if(y_data - oT + Math.abs(y - this.mousedown.y) <= this.canvas.height)// - this.border_width) //画像よりはみ出したら更新しない
+                        this.rubberbandRectangle.height = Math.abs(y - this.mousedown.y);
+                }
+
+                ///やさしく動かしてください、などと記載してごまかす
+
+                this.moveRubberbandDiv();
+                this.resizeRubberbandDiv();
+            };
+
+            rubberbandEnd(){
+                if(gb_flag_read)
+                {
+                    let ref = gb_event_reference;
+                    let arr = gb_arr_path_file;
+                    
+                    //矩形サイズの登録
+                    arr[ref.folder][ref.num_img].opencv.x      = Math.round(this.rubberbandRectangle.left - this.canvas.offsetLeft);
+                    arr[ref.folder][ref.num_img].opencv.y      = Math.round(this.rubberbandRectangle.top - this.canvas.offsetTop);
+                    arr[ref.folder][ref.num_img].opencv.width  = this.rubberbandRectangle.width;
+                    arr[ref.folder][ref.num_img].opencv.height = this.rubberbandRectangle.height;
+
+                    //console.log(arr[ref.folder][ref.num_img]);
+                    this.is_canvas_inside = false;
+                }
+
+                
+                //拡大表示はズレる（できれば、別ウィンドウなどに拡大表示させたい）
+                // var bbox = this.canvas.getBoundingClientRect();
+                
+                // try{
+                //     this.context.drawImage(canvas,
+                //         this.rubberbandRectangle.left - bbox.left,
+                //         this.rubberbandRectangle.top - bbox.top,
+                //         this.rubberbandRectangle.width,
+                //         this.rubberbandRectangle.height,
+                //         0,0,this.canvas.width, this.canvas.height);
+                // }
+                // catch(e){
+                //     //pass
+                // }
+
+                //this.resetRubberbandRectangle();
+
+                //this.rubberbandDiv.style.width = 0;
+                //this.rubberbandDiv.style.height = 0;
+
+                //this.hideRubberbandDiv();
+
+                this.dragging = false;
+            }
+
+            moveRubberbandDiv(){
+                let o =  document.getElementById("box_canvas");                   
+                let fix_x = (-Math.round(o.scrollTop));
+                let fix_y = (-Math.round(o.scrollLeft));
+                //console.log(Math.round(o.scrollLeft),Math.round(o.scrollTop));
+                this.rubberbandDiv.style.top = this.rubberbandRectangle.top + fix_x + 'px';
+                this.rubberbandDiv.style.left = this.rubberbandRectangle.left + fix_y + 'px';
+            }
+
+            resizeRubberbandDiv(){
+                this.rubberbandDiv.style.width = this.rubberbandRectangle.width + 'px';
+                this.rubberbandDiv.style.height = this.rubberbandRectangle.height + 'px';
+            }
+
+            showRubberbandDiv(){
+                this.rubberbandDiv.style.display = 'inline';
+            }
+
+            hideRubberbandDiv(){
+                this.rubberbandDiv.style.display = 'none';
+            }
+
+            resetRubberbandRectangle(){
+                this.rubberbandRectangle = {top:0, left:0, width:0, height:0};
+            }
+
+            setEvent()
+            {
+                /////このあたりを画像との相対位置とする
+                let o =  document.getElementById("box_canvas");
+
+                let my = this;
+                //イベントハンドラ
+                window.addEventListener('mousedown', e=>{
+                    if(!gb_flag_read) return;
+
+                    var x = e.x || e.clientX,
+                        y = e.y || e.clientY;
+
+                    x += Math.round(o.scrollLeft);
+                    y += Math.round(o.scrollTop);
+
+                    if(x > o.clientWidth + Math.round(o.scrollLeft) || y > o.clientHeight + Math.round(o.scrollTop)) return;
+
+                    e.preventDefault();
+                    my.rubberbandStart(x,y);
+                });
+
+                window.addEventListener('mousemove', e=>{
+                    if(!gb_flag_read) return;
+                    var x = e.x || e.clientX,
+                        y = e.y || e.clientY;
+                        
+                    x += Math.round(o.scrollLeft);
+                    y += Math.round(o.scrollTop);
+
+                    e.preventDefault();
+                    if(my.dragging){
+                        my.rubberbandStretch(x,y);
+                    }
+                });
+
+                window.addEventListener('mouseup', e=>{
+                    e.preventDefault();
+                    if(my.dragging)
+                        my.rubberbandEnd();
+                });
+
+                //box_canvasがスクロールしたときの補正
+                document.getElementById("box_canvas").onscroll = function(e){
+                    my.moveRubberbandDiv();
+                }
+
+
+                //image.onload = function(image){
+                //    this.context.drawImage(image, 0, 0,  this.canvas.width,  this.canvas.height);
+                //}
+                
+                // this.resetButton.onclick = function(e){
+                //     my.context.clearRect(0,0,my.context.canvas.width, my.context.canvas.height);
+                //     //this.context.drawImage(image,0,0,this.canvas.width, this.canvas.height);
+                // };
+            }
+            
+            mouseInfo()
+            {
+                let my = this;
+                let ox = document.getElementById("mouse_x_line");
+                let oy = document.getElementById("mouse_y_line");
+                let oc = document.getElementById("box_canvas");
+                let on = document.getElementById("nav_size_for_js");
+                let op = document.getElementById("mouse_xy_px");                  
+                window.addEventListener('mousemove',e=>{
+                    var x = e.x || e.clientX,
+                        y = e.y || e.clientY;
+                    ox.style.top = y - 3;//ピッタリ上にするとスクロールできなくなる
+                    oy.style.left = x - 3;
+                    op.style.top = y + 38;
+                    op.style.left = x - 190;
+                    op.innerHTML = 'x: ' + (x+Math.round(oc.scrollLeft)) + ', y: ' + (y+Math.round(oc.scrollTop));
+                });
+
+                oc.addEventListener('mouseover', e=>{
+                    if(!gb_flag_read) return;
+                        ox.style.display = 'inline';
+                        oy.style.display = 'inline';
+                        op.style.display = 'inline';
+                });
+
+                on.addEventListener('mouseover', e=>{
+                    ox.style.display = 'none';
+                    oy.style.display = 'none';
+                    op.style.display = 'none';
+                });
+            }
+        }
+
+        class ClsDownLoadData
+        {
+            constructor(btn_id)
+            {
+                this.btn_id = btn_id; //ボタンとして使うhtml inputのid
+                //this.dl_data = "ああああ";
+                
+                this.setClick();//ボタンクリックによるダウンロードの実行イベントを追加
+                this.id = 0;
+            }
+
+            //データのダウンロード
+            download(data)
+            {
+                let folder = gb_event_reference.folder
+                if(!folder) return;  //画像をクリックしたかチェック
+                
+                //データの作成
+                this.makeTxtFromArray();
+                if(gb_txt_data == "") return; //データが一つでも登録されたか
+
+                let blob = new Blob([gb_txt_data],{type:"text/plan"});//ダウンロードファイルタイプ
+                let link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = folder + '.txt';//ダウンロードファイル名
+                link.click();
+            } //参考　https://techacademy.jp/magazine/28206
+
+            //クリックイベントの設定
+            setClick()
+            {
+                var my = this;
+                document.getElementById(this.btn_id).onclick = function(){ my.download(my.dl_data);};
+            }
+
+            //配列データをパースする関数////////////////////////
+            makeTxtFromArray()
+            {
+                var data = "";
+                let folder = gb_event_reference.folder;
+                
+                let arr = gb_arr_path_file[folder];
+
+                if(!arr) return;
+
+                for(var i = 0; i < arr.length; i++)
+                {
+                    //console.log(arr[i].opencv.y);//arr[6]opencv.xがNANになってしまう opencvがopnecvだった（3時間）
+                    if(arr[i].opencv.x != null)
+                    {
+                        data += arr[i].opencv.folder + '/' + arr[i].opencv.fname + " ";
+                        data += arr[i].opencv.x      + " ";
+                        data += arr[i].opencv.y      + " ";
+                        data += arr[i].opencv.width  + " ";
+                        data += arr[i].opencv.height + "\n";
+                    }
+                }
+                gb_txt_data = data;
+            }
+        }
+        
+        ////ファイルリストの取得
+        class ClsDataExplorer{
+            constructor(instance_name)
+            {
+                this.instance_name = instance_name;
+                this.arr_path_file = {}; //[path名][画像オブジェクト]の二次元配列//////外からも使う
+
+                this.canvas = document.getElementById("canvas");
+                this.context = this.canvas.getContext('2d');
+                
+                this.folder = ""; //読み込んだフォルダ
+
+                //ファイルボタンのイベント
+                this.setReadFileList();
+
+                //マウスアップイベント
+                this.setMouseUpEvent();
+
+                //キャンバスエリアの調節
+                this.setBoxCanvasWidth();
+                //データリストエリアの調節
+                this.setBoxFileList();
+                //リサイズ時の調節
+                let my = this;
+                window.addEventListener('resize',function(){
+                    my.setBoxCanvasWidth();
+                    my.setBoxFileList();
+                });
+                //キーボードでファイル選択
+                this.setKeySelctEvent();
+                //イベント中のデータ
+                this.event_file_id = -1;
+            }
+
+            //ファイルリストの取得
+            fileListDirectory(files) {
+                let num_files = files.length,
+                    arr_filename = new Array(),
+                    arr_path     = new Array();
+                for (var i=0; i<num_files; i++) {
+                    arr_filename[i] = files[i].name;
+                    arr_path[i]     = files[i].webkitRelativePath;    // 行Ａ
+                }
+
+                let data_html = "<table>";
+                    data_html += "<tr id='table_cap'><th class='ta_f'>file_name</th><th class='ta_d'>x</th><th class='ta_d'>y</th><th class='ta_d'>width</th><th class='ta_d'>height</th></tr>";
+                for (var i=0; i<num_files; i++) {
+                    data_html += '<tr id="data_' + i +'"><th class="ta_f">';
+                    if (arr_filename[i] == ".") {                     // 行Ｂ
+                        data_html += "フォルダ：";
+                    }
+                    else {
+                        //data_html += "file：";
+                    }
+                    //returnAtagではonclickイベントも追加されている
+                    data_html += this.returnAtag(i, arr_path[i]) + "</th>";
+                    data_html += "<td id='x_"+ i +"'></td>";
+                    data_html += "<td id='y_"+ i +"'></td>";
+                    data_html += "<td id='width_"+ i +"'></td>";
+                    data_html += "<td id='height_"+ i +"'></td>";
+                    data_html += '</tr>';
+                    //パスを配列にしてオブジェクトを追加
+                    this.savePathFile(arr_path[i], i);
+                }
+                data_html += '</table>';
+                document.getElementById('place_file_list').innerHTML = data_html;
+
+                //クリックイベント追加
+                this.setClickDrawImg();
+            }
+
+            //画像オブジェクトを配列に追加
+            savePathFile(path, num)
+            {
+                let sp = path.split("/");
+                this.folder = sp[0];
+                //フォルダ名をキーとした配列とする
+                if( !this.arr_path_file[sp[0]] ) this.arr_path_file[sp[0]] = new Array();
+                let new_a = this.arr_path_file[sp[0]];
+
+                //配列に画像オブジェクトを追加
+                new_a.push(new Object());
+                //追加されたオブジェクトへの画像オブジェクト追加
+                let idx = new_a.length - 1;
+                
+                new_a[idx].imgobj = new Image();
+                new_a[idx].imgobj.src = path;
+
+                //追加されたオブジェクトにさらに画像認識用オブジェクトを追加
+                new_a[idx].opencv = new Object();
+                new_a[idx].opencv.folder = sp[0];
+                new_a[idx].opencv.fname = sp[1];
+                new_a[idx].opencv.x = null;
+                new_a[idx].opencv.y = null;
+                new_a[idx].opencv.width = null;
+                new_a[idx].opencv.height = null;
+                
+                //参照中の画像が何番目か
+                new_a[idx].num_img = num;
+                //なんというフォルダーか
+                new_a[idx].folder = this.folder;
+            }
+            //パスにaタグをつけて戻す
+            returnAtag(i, data)
+            {
+                return "<a href='javascript:void(0)' id='imgid_"+ i + "'>" + data + "</a>";
+            }
+            
+            //クリックしたときに画像ファイルを表示
+            drawCanvasImage()
+            {
+                //データの長さ（1回目は保存できていない）
+                let len = -1;
+                if(gb_arr_path_file[this.folder])
+                    len = gb_arr_path_file[this.folder].length;
+                
+                //クリックと十字キーイベントの振り分け
+                if(event.keyCode)
+                {
+                    if(len >= 0){
+                        switch(event.keyCode){
+                            case 38 : //上
+                                this.event_file_id--;
+                                break;
+                            case 40 : //下
+                                this.event_file_id++;
+                                break;
+                            default: break;
+                        }
+                        //オーバーしたときの処理
+                        if(this.event_file_id < 0){
+                            this.event_file_id = len-1;
+                        }else if(this.event_file_id > len-1){
+                            this.event_file_id = 0;
+                        }
+                    }else{
+                        //1回目の読み込み
+                        switch(event.keyCode){
+                            case 38 : //上
+                            case 40 : //下
+                            default: this.event_file_id = 0;;
+                        }
+                    }
+                }else{
+                    array_num = (event.target.id.split('_')[1]); //クリックした場所のid='imgid_1'などから数値のみをとりだす
+                    this.event_file_id = array_num;
+                }
+
+                var array_num = this.event_file_id;
+
+                var img = this.arr_path_file[this.folder][array_num].imgobj;
+                try{
+                    this.canvas.width = img.width;
+                    this.canvas.height = img.height;
+                    this.context.drawImage(img,0,0,img.width, img.height);
+
+                    //イベントデータオブジェクトの登録
+                    this.setNowEventObjNum(this.arr_path_file[this.folder][array_num]);
+
+                    //現在のデータを表示
+                    this.writeCurrentData(gb_arr_path_file[this.folder][array_num]);
+
+                    //現在のデータをテーブルに反映
+                    this.writeDataToTable();
+                }catch(e)
+                {
+                    console.log(e);
+                }
+
+                //セルの色を変える
+                this.setColorListTable();
+            }
+
+            //データをテーブルに反映
+            writeDataToTable()
+            {
+                let data = gb_arr_path_file[this.folder];
+                for(var i = 0; i< data.length; i++)
+                {
+                    if(data[i].opencv.x != null)
+                    {
+                        document.getElementById('x_' + i).innerHTML = data[i].opencv.x;
+                        document.getElementById('y_' + i).innerHTML = data[i].opencv.y;
+                        document.getElementById('width_' + i).innerHTML = data[i].opencv.width;
+                        document.getElementById('height_' + i).innerHTML = data[i].opencv.height;
+                        document.getElementById('data_'+i).getElementsByTagName("a")[0].style.fontWeight = 'normal';
+                    }
+                }
+            }
+
+            //
+            setMouseUpEvent()
+            {
+                let my = this;
+                document.getElementById('rubberbandDiv').onmousemove = function(e){
+                    my.writeDataToTable();
+                }
+            }
+
+            //データがあれば、四角を表示
+            writeCurrentData(data)
+            {
+                let div = document.getElementById('rubberbandDiv');
+                let c = this.canvas;
+                
+                let o =  document.getElementById("box_canvas");                   
+
+                if(data.opencv.x)
+                {
+                    div.style.top = data.opencv.y + c.offsetTop  - Math.round(o.scrollTop) + 'px';//this.rubberbandRectangle.top + 'px';
+                    div.style.left = data.opencv.x + c.offsetLeft - Math.round(o.scrollLeft) + 'px';//this.rubberbandRectangle.left + 'px';
+                    div.style.width = data.opencv.width + 'px';//this.rubberbandRectangle.width + 'px';
+                    div.style.height = data.opencv.height + 'px';//this.rubberbandRectangle.height + 'px';
+                    div.style.display = 'inline';
+
+                    
+                    ////////////////////cls_rbはmainの補正に依存している
+                    //////rubberbandの一部はグローバルクラスにする必要あり
+                    //これが無いと選択中の画像を変更したあとにスクロールすることでrubberbandがずれてしまう
+                    cls_rb.rubberbandRectangle = {
+                        top:data.opencv.y, 
+                        left:data.opencv.x, 
+                        width:data.opencv.width, 
+                        height:data.opencv.height
+                    };
+                }
+                else
+                {
+                    div.style.display = 'none';
+                }
+            }
+
+            //現在イベント中のデータ
+            setNowEventObjNum(obj_data)
+            {
+                gb_event_reference = obj_data;
+                //
+                gb_arr_path_file = this.arr_path_file;
+                gb_flag_read = true;
+            }
+
+            //イベント登録　キーボードでファイル選択
+            setKeySelctEvent()
+            {
+                let my = this;
+                document.body.addEventListener('keydown', function(e){
+                    //ファイルを読み込んでいなければreturn
+                    if(my.folder == "") return;
+
+                    let n = gb_event_reference.num_img;//現在のデータ（配列の番号）
+                    let d = gb_arr_path_file;//データ配列
+
+                    if(e.ctrlKey && e.keyCode == '38')//上
+                    {
+                        my.drawCanvasImage();
+                        //console.log("ctrl+上");
+                    }
+
+                    if(e.ctrlKey && e.keyCode == '40')//下  //左37　右39
+                    {
+                        my.drawCanvasImage();
+                        //console.log("ctrl+下");
+                    }
+                });
+            }
+
+            //選択中のテーブルセルの色を変える
+            setColorListTable()
+            {
+                let id = this.event_file_id; //現在選択中のファイル
+                let l = this.arr_path_file[this.folder].length; //ファイル数
+
+                //オブジェクト
+                let arr = ['data_', 'x_', 'y_','width_','height_'];
+
+                //すべての背景を戻す
+                for(var i = 0; i< l ; i++){
+                    for(var j = 0 ; j < arr.length;j++){
+                        document.getElementById(arr[j] + i).style.backgroundColor = 'transparent';
+                    }
+                }
+
+                //背景の設定
+                for(var j = 0 ; j < arr.length;j++){
+                    document.getElementById(arr[j] + id).style.backgroundColor = '#efefef';
+                }
+            }
+
+            //クリックイベントの追加　 DataExplorer returnAtag
+            setClickDrawImg()
+            {
+                let lng = this.arr_path_file[this.folder].length;
+                let my = this;
+                for(var i = 0; i < lng; i++)
+                {
+                    document.getElementById('imgid_'+i).onclick = function(){my.drawCanvasImage(my.arr_path_file);}
+                    //ここのイベントは<aタグがオブジェクトになるので、参照を渡さないといけない。（バグ注意）
+                    //returnAtagで指定しているものとあわせる
+                }
+            }
+
+            //ファイルリードイベント
+            setReadFileList()
+            {
+                let my = this;
+                let obj = document.getElementById("cssid_file_read");
+                obj.innerHTML = '<input  type="file" webkitdirectory directory onChange="' + this.instance_name + '.fileListDirectory(this.files)">';
+            }
+
+            //キャンバスエリアのサイズ調節（スクロールバーの表示位置）
+            setBoxCanvasWidth()
+            {
+                document.getElementById("box_canvas").style.width = document.documentElement.clientWidth - 450 + 'px';
+            }
+
+            //データリストエリアのサイズ調節（スクロールバーの表示位置）
+            setBoxFileList()
+            {
+                var box = document.getElementById("place_file_list");
+                var nav = document.getElementById("nav_size_for_js");
+                var comp = window.getComputedStyle(nav).height;
+
+                var cap = document.getElementById("list_caption");//テーブルの見出しを作っているテーブル
+                var btn = document.getElementById("box_download");//ダウンロードボタン
+                //補正する高さ
+                var num_fix = cap.offsetTop + cap.clientHeight + btn.clientHeight;
+                //console.log(cap.offsetTop, cap.clientHeight);
+                box.style.height = comp.split('px')[0] -num_fix + 'px';
+                //console.log(comp.split('px')[0], box.clientHeight);
+            }
+        }
+ 
+
+        ////ロード設定
+        let cls_rb, cls_dl, cls_expl, cls_cnv;
+        window.onload = function()
+        {
+            //順序注意
+            cls_expl = new ClsDataExplorer("cls_expl");
+            cls_rb = new ClsRubberBand(cls_expl.canvas, cls_expl.context);
+            cls_dl = new ClsDownLoadData("btn_DLtxt");
+        }
+    </script>
+
+</html>
+
