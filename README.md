@@ -7,7 +7,7 @@ OpenCV画像認識の正解画像における[filename x y width height]のテ�
 自分で使うため、かつ、ポートフォリオのようなものですのでライセンスフリーです。
 
 #Demo
-（画像追加予定）
+![スクリーンショット](https://raw.github.com/wiki/MtYosukeSato/Preparing_Machine_Learning/img/README.png)
 
 #Usage
 1.preparing_machine_learning.htmlを開く。
