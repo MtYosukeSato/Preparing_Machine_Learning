@@ -225,21 +225,26 @@ OpenCVの画像認識データを作成するために使うHTML
 
         <!-- 枠線表示 -->
         <div id="rubberbandDiv"></div>
-        <!-- 現在のマウス位置） -->
+        <!-- 現在のマウス位置） これらはcanvasの要素にしてしまうのが望ましい -->
         <div id="mouse_xy_px"></div>
         <div id="mouse_x_line"></div>
         <div id="mouse_y_line"></div>
     </body>
 
     <script>
-        //イベント中のオブジェクトへの参照
-        let gb_event_reference = {};
-        //ファイルを取得したオブジェクト一覧
-        let gb_arr_path_file = {};
-        //読みだしたかのフラグ
-        let gb_flag_read = false;
-        //書き出すデータ
-        let gb_txt_data = '';
+        //全クラスで共用するグローバルアイテムクラス
+        class Global_Items{
+            constructor()
+            {
+                this.event_reference = {};   //イベント中のオブジェクトへの参照
+                this.arr_path_file = {};     //ファイルを取得したオブジェクト一覧
+                this.flag_read = false;      //読みだしたかのフラグ
+                this.txt_download_data = ''; //書き出すデータ
+                this.folder = '';            //読み込んだフォルダ名
+            }
+        }
+        let GBI = new Global_Items();
+
 
         //四角を描くクラス
         class ClsRubberBand{
@@ -255,7 +260,6 @@ OpenCVの画像認識データを作成するために使うHTML
 
                 //
                 this.canvas_position = this.canvas.getBoundingClientRect();
-                //this.border_width = 3; //cssで設定しているボーダーサイズ
 
                 this.is_canvas_inside = false;
 
@@ -349,10 +353,10 @@ OpenCVの画像認識データを作成するために使うHTML
             };
 
             rubberbandEnd(){
-                if(gb_flag_read)
+                if(GBI.flag_read)
                 {
-                    let ref = gb_event_reference;
-                    let arr = gb_arr_path_file;
+                    let ref = GBI.event_reference;
+                    let arr = GBI.arr_path_file;
                     
                     //矩形サイズの登録
                     arr[ref.folder][ref.num_img].opencv.x      = Math.round(this.rubberbandRectangle.left - this.canvas.offsetLeft);
@@ -424,7 +428,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 let my = this;
                 //イベントハンドラ
                 window.addEventListener('mousedown', e=>{
-                    if(!gb_flag_read) return;
+                    if(!GBI.flag_read) return;
 
                     var x = e.x || e.clientX,
                         y = e.y || e.clientY;
@@ -439,7 +443,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 });
 
                 window.addEventListener('mousemove', e=>{
-                    if(!gb_flag_read) return;
+                    if(!GBI.flag_read) return;
                     var x = e.x || e.clientX,
                         y = e.y || e.clientY;
                         
@@ -492,7 +496,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 });
 
                 oc.addEventListener('mouseover', e=>{
-                    if(!gb_flag_read) return;
+                    if(!GBI.flag_read) return;
                         ox.style.display = 'inline';
                         oy.style.display = 'inline';
                         op.style.display = 'inline';
@@ -518,18 +522,19 @@ OpenCVの画像認識データを作成するために使うHTML
             //データのダウンロード
             download(data)
             {
-                let folder = gb_event_reference.folder
-                if(!folder) return;  //画像をクリックしたかチェック
-                
-                //データの作成
+                let folder = GBI.event_reference.folder
+                //if(!folder) return;  //画像をクリックしたかチェック
                 this.makeTxtFromArray();
-                if(gb_txt_data == "") return; //データが一つでも登録されたか
 
-                let blob = new Blob([gb_txt_data],{type:"text/plan"});//ダウンロードファイルタイプ
-                let link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = folder + '.txt';//ダウンロードファイル名
-                link.click();
+                //データの作成
+                //if(this.makeTxtFromArray())
+                //{
+                    let blob = new Blob([GBI.txt_download_data],{type:"text/plan"});//ダウンロードファイルタイプ
+                    let link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = folder + '.txt';//ダウンロードファイル名
+                    link.click();
+                //}
             } //参考　https://techacademy.jp/magazine/28206
 
             //クリックイベントの設定
@@ -543,25 +548,43 @@ OpenCVの画像認識データを作成するために使うHTML
             makeTxtFromArray()
             {
                 var data = "";
-                let folder = gb_event_reference.folder;
-                
-                let arr = gb_arr_path_file[folder];
-
-                if(!arr) return;
-
+                var flag_ng = false;
+                let folder = 　GBI.event_reference.folder;
+                /*if(folder=="NG" && window.confirm('NGリストとして書き出しますか？'))
+                {
+                    flag_ng = true;
+                }
+//////////////////////////////////////////////
+//読み込んだフォルダはすぐにGB配列にいれる
+////////////////////////////////////////////エラーが出る
+*/
+                let arr = GBI.arr_path_file[folder];
                 for(var i = 0; i < arr.length; i++)
                 {
                     //console.log(arr[i].opencv.y);//arr[6]opencv.xがNANになってしまう opencvがopnecvだった（3時間）
                     if(arr[i].opencv.x != null)
                     {
                         data += arr[i].opencv.folder + '/' + arr[i].opencv.fname + " ";
-                        data += arr[i].opencv.x      + " ";
-                        data += arr[i].opencv.y      + " ";
-                        data += arr[i].opencv.width  + " ";
-                        data += arr[i].opencv.height + "\n";
+                        if(!flag_ng){
+                            data += arr[i].opencv.x      + " ";
+                            data += arr[i].opencv.y      + " ";
+                            data += arr[i].opencv.width  + " ";
+                            data += arr[i].opencv.height + "\n";
+                        }
                     }
                 }
-                gb_txt_data = data;
+                
+                GBI.txt_download_data = data;
+                /*
+                 //データが一つでも登録されたか
+                if(data == "")
+                {
+                    return false;
+                }
+                else{
+                    GBI.txt_download_data = data;
+                    return true;
+                }*/
             }
         }
         
@@ -641,6 +664,9 @@ OpenCVの画像認識データを作成するために使うHTML
             {
                 let sp = path.split("/");
                 this.folder = sp[0];
+                /////////////////////////////////////////////////////////////
+                GBI.folder = sp[0];
+                //////////////////////////////////////////////////////////////
                 //フォルダ名をキーとした配列とする
                 if( !this.arr_path_file[sp[0]] ) this.arr_path_file[sp[0]] = new Array();
                 let new_a = this.arr_path_file[sp[0]];
@@ -678,8 +704,8 @@ OpenCVの画像認識データを作成するために使うHTML
             {
                 //データの長さ（1回目は保存できていない）
                 let len = -1;
-                if(gb_arr_path_file[this.folder])
-                    len = gb_arr_path_file[this.folder].length;
+                if(GBI.arr_path_file[this.folder])
+                    len = GBI.arr_path_file[this.folder].length;
                 
                 //クリックと十字キーイベントの振り分け
                 if(event.keyCode)
@@ -725,7 +751,7 @@ OpenCVの画像認識データを作成するために使うHTML
                     this.setNowEventObjNum(this.arr_path_file[this.folder][array_num]);
 
                     //現在のデータを表示
-                    this.writeCurrentData(gb_arr_path_file[this.folder][array_num]);
+                    this.writeCurrentData(GBI.arr_path_file[this.folder][array_num]);
 
                     //現在のデータをテーブルに反映
                     this.writeDataToTable();
@@ -741,7 +767,7 @@ OpenCVの画像認識データを作成するために使うHTML
             //データをテーブルに反映
             writeDataToTable()
             {
-                let data = gb_arr_path_file[this.folder];
+                let data = GBI.arr_path_file[this.folder];
                 for(var i = 0; i< data.length; i++)
                 {
                     if(data[i].opencv.x != null)
@@ -800,10 +826,10 @@ OpenCVの画像認識データを作成するために使うHTML
             //現在イベント中のデータ
             setNowEventObjNum(obj_data)
             {
-                gb_event_reference = obj_data;
+                GBI.event_reference = obj_data;
                 //
-                gb_arr_path_file = this.arr_path_file;
-                gb_flag_read = true;
+                GBI.arr_path_file = this.arr_path_file;
+                GBI.flag_read = true;
             }
 
             //イベント登録　キーボードでファイル選択
@@ -814,8 +840,8 @@ OpenCVの画像認識データを作成するために使うHTML
                     //ファイルを読み込んでいなければreturn
                     if(my.folder == "") return;
 
-                    let n = gb_event_reference.num_img;//現在のデータ（配列の番号）
-                    let d = gb_arr_path_file;//データ配列
+                    let n = GBI.event_reference.num_img;//現在のデータ（配列の番号）
+                    let d = GBI.arr_path_file;//データ配列
 
                     if(e.ctrlKey && e.keyCode == '38')//上
                     {
