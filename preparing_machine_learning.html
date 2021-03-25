@@ -555,12 +555,12 @@ OpenCVの画像認識データを作成するために使うHTML
                 var flag_ng = false;
                 let arr = GBI.arr_path_file[GBI.folder];
                 
-                if(GBI.folder=="NG" && window.confirm('NGリストとして書き出しますか？')) //NGリスト
+                if(GBI.folder=="NG" || GBI.folder == "ng" && window.confirm('NGリストとして書き出しますか？')) //NGリスト
                 {
                     flag_ng = true;
                     for(var i = 0; i < arr.length; i++)
                     {
-                        data += arr[i].opencv.folder + '/' + arr[i].opencv.fname + "\n";
+                        data += arr[i].opencv.folder + '\\' + arr[i].opencv.fname + "\n";
                     }
                 }
                 else //OKリスト
@@ -569,7 +569,8 @@ OpenCVの画像認識データを作成するために使うHTML
                     {
                         if(arr[i].opencv.x != null)
                         {
-                            data += arr[i].opencv.folder + '/' + arr[i].opencv.fname + " ";
+                            data += arr[i].opencv.folder + '\\' + arr[i].opencv.fname + " ";
+                            data += "1 "; //画像オブジェクトの数
                             data += arr[i].opencv.x      + " ";
                             data += arr[i].opencv.y      + " ";
                             data += arr[i].opencv.width  + " ";
