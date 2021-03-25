@@ -7,12 +7,7 @@ OpenCVの画像認識データを作成するために使うHTML
         <meta charset="UTF-8">
         <title>正解の場所</title>
         <style>
-            #rubberbandDiv{z-index: 4;}
-            #mouse_x_line,
-            #mouse_y_line{z-index: 3;}
-            #canvas{z-index: 2;}
-            nav{z-index: 5;}
-
+            /* データ登録時の枠線 */
             #rubberbandDiv{
                 position:absolute;
                 border: 3px solid yellow;
@@ -20,6 +15,21 @@ OpenCVの画像認識データを作成するために使うHTML
                 display: none;
             }
 
+            /* 重要なz-index */
+            #rubberbandDiv{z-index: 4;}
+            #mouse_x_line,
+            #mouse_y_line{z-index: 3;}
+            #canvas{z-index: 2;}
+            nav{z-index: 5;}
+
+            /* カラーに関するもの */
+            h1{ border-top:5px solid rgb(0, 122, 204);}
+            #place_file_list th, #list_caption, h1{ color:rgb(46, 98, 211);}
+            #file_box, #box_download{ background-color: #f1f8fc; }
+            #mouse_x_line, #mouse_y_line{border-color:#fff;}
+            #mouse_xy_px{color:#fff;background-color: #000;}
+
+            /* マウスが指し示すピクセル表示用 canvas化するのが望ましい */
             #mouse_x_line,
             #mouse_y_line
             {
@@ -27,7 +37,6 @@ OpenCVの画像認識データを作成するために使うHTML
                 top:0;
                 left:0;
                 border-style: dashed;
-                border-color:#fff;
                 display: none;
                 background-color: transparent;
                 opacity: 0.7;
@@ -38,7 +47,6 @@ OpenCVの画像認識データを作成するために使うHTML
                 border-width:1px 0 0 0;
                 width:100%;
                 height:1px;
-
             }
             #mouse_y_line
             {
@@ -49,10 +57,8 @@ OpenCVの画像認識データを作成するために使うHTML
             #mouse_xy_px
             {
                 position: absolute;
-                color:#fff;
                 text-align: center;
                 width:150px;
-                background-color: #000;
                 opacity: 0.5;
             }
 
@@ -60,12 +66,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 overflow-y:hidden;
                 height:100%;
             }
-
-            #file_box{
-                position:relative;
-                top:0;
-                right:0;
-            }
+            /* ***********右カラム************ */
             nav{
                 position: absolute;
                 top:0;
@@ -77,34 +78,27 @@ OpenCVの画像認識データを作成するために使うHTML
                 overflow:hidden;
                 background-color: #fff;
             }
-
-            #box_download
-            {
-                position:absolute;
-                bottom:0;
-                left:0;
+            /* ファイル選択のボックス */
+            #file_box{
+                position:relative;
+                top:0;
+                right:0;
             }
+            /* 共通する余白サイズ */
+            h1, p, #place_file_list{padding-left:10px;}
 
-            h1,p,#place_file_list{padding-left:5px;}
-
-
+            /* タイトル */
             h1{
                 margin:0 0 5px 0;
                 padding-top:5px;
             }
-            h1{ border-top:5px solid rgb(0, 122, 204);}
-            h1 span{font-size: 60%;font-weight: normal;position: relative;top:-2px;}
-            #place_file_list th,
-            #list_caption,
-            h1{
-                color:rgb(46, 98, 211);
-            }
-            #file_box,
-            #box_download
-            {
-                background-color: #f1f8fc;
-            }
-
+            h1 span{
+                font-size: 60%;
+                font-weight: normal;
+                position: relative;
+                top:-2px;
+                }
+            /* 説明文 */
             p{
                 margin:5px 0 20px 0;
                 font-size: 85%;
@@ -137,6 +131,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 top:-5px;
                 left:3px;
             }
+            /* データテーブル関係 */
             #table_cap{display: none;}
             #place_file_list table
             {
@@ -161,10 +156,12 @@ OpenCVの画像認識データを作成するために使うHTML
                 width:75px;
                 text-align: right;
             }
+            /* **********左カラム********** */
             main{
                 padding:0;
                 margin: 0;
             }
+            /* 画像を表示するcanvasを格納するdiv */
             #box_canvas{
                 position: absolute;
                 top:0;
@@ -173,9 +170,11 @@ OpenCVの画像認識データを作成するために使うHTML
                 overflow: scroll;
                 margin-right:450px;/*nav width:450px */
             }
+            /* ダウンロード用のボックス */
             #box_download{
                 position:absolute;
                 bottom:0;
+                left:0;
                 padding:12px 0;
                 width:100%;
                 height:25px;
@@ -188,7 +187,7 @@ OpenCVの画像認識データを作成するために使うHTML
             <h1>正解リストの作成 <span>(1画像につき正解1つ版)</span></h1>
             <p>「ファイルの選択」から画像が保存されているフォルダを選び「アップロード」をクリックします。読み込み後は[ctrl+上]または[ctrl+下]で選択できます。
                 オブジェクト選択はマウスでドラッグして枠線を引きます。修正は枠線の外をクリック後に再度ドラッグで範囲選択してください。テキストのダウンロードをクリックすると
-                データが登録されているもののみファイルとして書き出されます。
+                データが登録されているもののみファイルとして書き出されます。NGデータリストは、フォルダ名をNGとして読み込めばそのままテキストのダウンロードができます。
             </p>
             <!-- フォルダの読み込み -->
             <div id="file_box">
@@ -241,6 +240,13 @@ OpenCVの画像認識データを作成するために使うHTML
                 this.flag_read = false;      //読みだしたかのフラグ
                 this.txt_download_data = ''; //書き出すデータ
                 this.folder = '';            //読み込んだフォルダ名
+
+                this.canvas = document.getElementById("canvas"); //画像表示用キャンバス
+                this.context = this.canvas.getContext('2d');     //
+
+                this.cls_rb   = {};//オンロード(main関数)で利用
+                this.cls_dl   = {};//オンロード(main関数)で利用
+                this.cls_expl = {};//オンロード(main関数)で利用
             }
         }
         let GBI = new Global_Items();
@@ -248,18 +254,17 @@ OpenCVの画像認識データを作成するために使うHTML
 
         //四角を描くクラス
         class ClsRubberBand{
-            constructor(canvas, context, evt_reference) {
-                this.canvas = canvas;
-                this.context = context;
-                this.rubberbandDiv = document.getElementById('rubberbandDiv'),
-                this.resetButton = document.getElementById('resetButton'),
-                this.mousedown = {},
-                this.rubberbandRectangle = {},
+            constructor() {
+                this.box_canvas = document.getElementById("box_canvas");
+                this.rubberbandDiv = document.getElementById('rubberbandDiv');
+                this.resetButton = document.getElementById('resetButton');
+                this.mousedown = {};
+                this.rubberbandRectangle = {};//ClsDataExplorerのwriteCurrentDataで利用している
                 this.dragging = false;
                 this.setEvent();
 
                 //
-                this.canvas_position = this.canvas.getBoundingClientRect();
+                this.canvas_position = GBI.canvas.getBoundingClientRect();
 
                 this.is_canvas_inside = false;
 
@@ -310,8 +315,8 @@ OpenCVの画像認識データを作成するために使うHTML
                 }
 
                 //キャンバスのページ内表示位置の修正
-                let oL =  this.canvas.offsetLeft; 
-                let oT = this.canvas.offsetTop;
+                let oL = GBI.canvas.offsetLeft; 
+                let oT = GBI.canvas.offsetTop;
                 x_data = (oL > x_data) ? oL : x_data; //画像より左なら固定
                 y_data = (oT > y_data) ? oT : y_data; //画像より上なら固定
                 
@@ -329,7 +334,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 else
                 {
                     ////すばやく動かすと端までいかない
-                    if(x_data - oL + Math.abs(x - this.mousedown.x) <= this.canvas.width)// - this.border_width) //これを入れると表示はいいがデータがずれる
+                    if(x_data - oL + Math.abs(x - this.mousedown.x) <= GBI.canvas.width)// - this.border_width) //これを入れると表示はいいがデータがずれる
                         this.rubberbandRectangle.width = Math.abs(x - this.mousedown.x);
                 }
 
@@ -344,7 +349,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 }
                 else
                 {
-                    if(y_data - oT + Math.abs(y - this.mousedown.y) <= this.canvas.height)// - this.border_width) //画像よりはみ出したら更新しない
+                    if(y_data - oT + Math.abs(y - this.mousedown.y) <= GBI.canvas.height)// - this.border_width) //画像よりはみ出したら更新しない
                         this.rubberbandRectangle.height = Math.abs(y - this.mousedown.y);
                 }
 
@@ -359,10 +364,10 @@ OpenCVの画像認識データを作成するために使うHTML
                     let arr = GBI.arr_path_file;
                     
                     //矩形サイズの登録
-                    arr[ref.folder][ref.num_img].opencv.x      = Math.round(this.rubberbandRectangle.left - this.canvas.offsetLeft);
-                    arr[ref.folder][ref.num_img].opencv.y      = Math.round(this.rubberbandRectangle.top - this.canvas.offsetTop);
-                    arr[ref.folder][ref.num_img].opencv.width  = this.rubberbandRectangle.width;
-                    arr[ref.folder][ref.num_img].opencv.height = this.rubberbandRectangle.height;
+                    arr[ref.opencv.folder][ref.num_img].opencv.x      = Math.round(this.rubberbandRectangle.left - GBI.canvas.offsetLeft);
+                    arr[ref.opencv.folder][ref.num_img].opencv.y      = Math.round(this.rubberbandRectangle.top - GBI.canvas.offsetTop);
+                    arr[ref.opencv.folder][ref.num_img].opencv.width  = this.rubberbandRectangle.width;
+                    arr[ref.opencv.folder][ref.num_img].opencv.height = this.rubberbandRectangle.height;
 
                     //console.log(arr[ref.folder][ref.num_img]);
                     this.is_canvas_inside = false;
@@ -370,15 +375,15 @@ OpenCVの画像認識データを作成するために使うHTML
 
                 
                 //拡大表示はズレる（別ウィンドウ機能に利用できそう）
-                // var bbox = this.canvas.getBoundingClientRect();
+                // var bbox = GBI.canvas.getBoundingClientRect();
                 
                 // try{
-                //     this.context.drawImage(canvas,
+                //     GBI.context.drawImage(canvas,
                 //         this.rubberbandRectangle.left - bbox.left,
                 //         this.rubberbandRectangle.top - bbox.top,
                 //         this.rubberbandRectangle.width,
                 //         this.rubberbandRectangle.height,
-                //         0,0,this.canvas.width, this.canvas.height);
+                //         0,0,GBI.canvas.width, GBI.canvas.height);
                 // }
                 // catch(e){
                 //     //pass
@@ -395,9 +400,8 @@ OpenCVの画像認識データを作成するために使うHTML
             }
 
             moveRubberbandDiv(){
-                let o =  document.getElementById("box_canvas");                   
-                let fix_x = (-Math.round(o.scrollTop));
-                let fix_y = (-Math.round(o.scrollLeft));
+                let fix_x = (-Math.round(this.box_canvas.scrollTop));
+                let fix_y = (-Math.round(this.box_canvas.scrollLeft));
                 //console.log(Math.round(o.scrollLeft),Math.round(o.scrollTop));
                 this.rubberbandDiv.style.top = this.rubberbandRectangle.top + fix_x + 'px';
                 this.rubberbandDiv.style.left = this.rubberbandRectangle.left + fix_y + 'px';
@@ -423,7 +427,7 @@ OpenCVの画像認識データを作成するために使うHTML
             setEvent()
             {
                 /////このあたりを画像との相対位置とする
-                let o =  document.getElementById("box_canvas");
+                let o =  this.box_canvas;
 
                 let my = this;
                 //イベントハンドラ
@@ -463,17 +467,17 @@ OpenCVの画像認識データを作成するために使うHTML
                 });
 
                 //box_canvasがスクロールしたときの補正
-                document.getElementById("box_canvas").onscroll = function(e){
+                this.box_canvas.onscroll = function(e){
                     my.moveRubberbandDiv();
                 }
 
                 //image.onload = function(image){
-                //    this.context.drawImage(image, 0, 0,  this.canvas.width,  this.canvas.height);
+                //    GBI.context.drawImage(image, 0, 0,  GBI.canvas.width,  GBI.canvas.height);
                 //}
                 
                 // this.resetButton.onclick = function(e){
                 //     my.context.clearRect(0,0,my.context.canvas.width, my.context.canvas.height);
-                //     //this.context.drawImage(image,0,0,this.canvas.width, this.canvas.height);
+                //     //GBI.context.drawImage(image,0,0,GBI.canvas.width, GBI.canvas.height);
                 // };
             }
             
@@ -482,7 +486,7 @@ OpenCVの画像認識データを作成するために使うHTML
                 let my = this;
                 let ox = document.getElementById("mouse_x_line");
                 let oy = document.getElementById("mouse_y_line");
-                let oc = document.getElementById("box_canvas");
+                let oc = this.box_canvas;
                 let on = document.getElementById("nav_size_for_js");
                 let op = document.getElementById("mouse_xy_px");                  
                 window.addEventListener('mousemove',e=>{
@@ -522,26 +526,26 @@ OpenCVの画像認識データを作成するために使うHTML
             //データのダウンロード
             download(data)
             {
-                let folder = GBI.event_reference.folder
-                //if(!folder) return;  //画像をクリックしたかチェック
+                //画像を読み込んだかしたかチェック
+                if(!GBI.folder) return;
+                //データ配列をテキスト化
                 this.makeTxtFromArray();
+                //テキストデータが空なら実行しない
+                if(GBI.txt_download_data == "") return; 
 
                 //データの作成
-                //if(this.makeTxtFromArray())
-                //{
-                    let blob = new Blob([GBI.txt_download_data],{type:"text/plan"});//ダウンロードファイルタイプ
-                    let link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = folder + '.txt';//ダウンロードファイル名
-                    link.click();
-                //}
+                let blob = new Blob([GBI.txt_download_data],{type:"text/plan"});//ダウンロードファイルタイプ
+                let link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = GBI.folder + '.txt';//ダウンロードファイル名
+                link.click();
             } //参考　https://techacademy.jp/magazine/28206
 
             //クリックイベントの設定
             setClick()
             {
                 var my = this;
-                document.getElementById(this.btn_id).onclick = function(){ my.download(my.dl_data);};
+                document.getElementById(this.btn_id).addEventListener('click', ()=>{ my.download(my.dl_data);});
             }
 
             //配列データをパースする関数
@@ -549,23 +553,23 @@ OpenCVの画像認識データを作成するために使うHTML
             {
                 var data = "";
                 var flag_ng = false;
-                let folder = 　GBI.event_reference.folder;
-                /*if(folder=="NG" && window.confirm('NGリストとして書き出しますか？'))
+                let arr = GBI.arr_path_file[GBI.folder];
+                
+                if(GBI.folder=="NG" && window.confirm('NGリストとして書き出しますか？')) //NGリスト
                 {
                     flag_ng = true;
-                }
-//////////////////////////////////////////////
-//読み込んだフォルダはすぐにGB配列にいれる
-////////////////////////////////////////////エラーが出る
-*/
-                let arr = GBI.arr_path_file[folder];
-                for(var i = 0; i < arr.length; i++)
-                {
-                    //console.log(arr[i].opencv.y);//arr[6]opencv.xがNANになってしまう opencvがopnecvだった（3時間）
-                    if(arr[i].opencv.x != null)
+                    for(var i = 0; i < arr.length; i++)
                     {
-                        data += arr[i].opencv.folder + '/' + arr[i].opencv.fname + " ";
-                        if(!flag_ng){
+                        data += arr[i].opencv.folder + '/' + arr[i].opencv.fname + "\n";
+                    }
+                }
+                else //OKリスト
+                {
+                    for(var i = 0; i < arr.length; i++)
+                    {
+                        if(arr[i].opencv.x != null)
+                        {
+                            data += arr[i].opencv.folder + '/' + arr[i].opencv.fname + " ";
                             data += arr[i].opencv.x      + " ";
                             data += arr[i].opencv.y      + " ";
                             data += arr[i].opencv.width  + " ";
@@ -573,18 +577,7 @@ OpenCVの画像認識データを作成するために使うHTML
                         }
                     }
                 }
-                
                 GBI.txt_download_data = data;
-                /*
-                 //データが一つでも登録されたか
-                if(data == "")
-                {
-                    return false;
-                }
-                else{
-                    GBI.txt_download_data = data;
-                    return true;
-                }*/
             }
         }
         
@@ -593,13 +586,7 @@ OpenCVの画像認識データを作成するために使うHTML
             constructor(instance_name)
             {
                 this.instance_name = instance_name;
-                this.arr_path_file = {}; //[path名][画像オブジェクト]の二次元配列//////外からも使う
-
-                this.canvas = document.getElementById("canvas");
-                this.context = this.canvas.getContext('2d');
-                
-                this.folder = ""; //読み込んだフォルダ
-
+                this.box_canvas = document.getElementById("box_canvas");
                 //ファイルボタンのイベント
                 this.setReadFileList();
 
@@ -639,9 +626,9 @@ OpenCVの画像認識データを作成するために使うHTML
                     if (arr_filename[i] == ".") {                     // 行Ｂ
                         data_html += "フォルダ：";
                     }
-                    else {
-                        //data_html += "file：";
-                    }
+                    //else {
+                    //    data_html += "file：";
+                    //}
                     //returnAtagではonclickイベントも追加されている
                     data_html += this.returnAtag(i, arr_path[i]) + "</th>";
                     data_html += "<td id='x_"+ i +"'></td>";
@@ -663,13 +650,11 @@ OpenCVの画像認識データを作成するために使うHTML
             savePathFile(path, num)
             {
                 let sp = path.split("/");
-                this.folder = sp[0];
-                /////////////////////////////////////////////////////////////
                 GBI.folder = sp[0];
-                //////////////////////////////////////////////////////////////
+                
                 //フォルダ名をキーとした配列とする
-                if( !this.arr_path_file[sp[0]] ) this.arr_path_file[sp[0]] = new Array();
-                let new_a = this.arr_path_file[sp[0]];
+                if( !GBI.arr_path_file[sp[0]] ) GBI.arr_path_file[sp[0]] = new Array();
+                let new_a = GBI.arr_path_file[sp[0]];
 
                 //配列に画像オブジェクトを追加
                 new_a.push(new Object());
@@ -690,8 +675,6 @@ OpenCVの画像認識データを作成するために使うHTML
                 
                 //参照中の画像が何番目か
                 new_a[idx].num_img = num;
-                //なんというフォルダーか
-                new_a[idx].folder = this.folder;
             }
             //パスにaタグをつけて戻す
             returnAtag(i, data)
@@ -704,8 +687,8 @@ OpenCVの画像認識データを作成するために使うHTML
             {
                 //データの長さ（1回目は保存できていない）
                 let len = -1;
-                if(GBI.arr_path_file[this.folder])
-                    len = GBI.arr_path_file[this.folder].length;
+                if(GBI.arr_path_file[GBI.folder])
+                    len = GBI.arr_path_file[GBI.folder].length;
                 
                 //クリックと十字キーイベントの振り分け
                 if(event.keyCode)
@@ -741,17 +724,19 @@ OpenCVの画像認識データを作成するために使うHTML
 
                 var array_num = this.event_file_id;
 
-                var img = this.arr_path_file[this.folder][array_num].imgobj;
+                var img = GBI.arr_path_file[GBI.folder][array_num].imgobj;
                 try{
-                    this.canvas.width = img.width;
-                    this.canvas.height = img.height;
-                    this.context.drawImage(img,0,0,img.width, img.height);
+                    GBI.canvas.width = img.width;
+                    GBI.canvas.height = img.height;
+                    GBI.context.drawImage(img,0,0,img.width, img.height);
 
-                    //イベントデータオブジェクトの登録
-                    this.setNowEventObjNum(this.arr_path_file[this.folder][array_num]);
+                    //現在イベント中のデータ参照を保存
+                    GBI.event_reference = GBI.arr_path_file[GBI.folder][array_num];
+                    //読み込みをしたか
+                    GBI.flag_read = true;
 
                     //現在のデータを表示
-                    this.writeCurrentData(GBI.arr_path_file[this.folder][array_num]);
+                    this.writeCurrentData(GBI.arr_path_file[GBI.folder][array_num]);
 
                     //現在のデータをテーブルに反映
                     this.writeDataToTable();
@@ -767,7 +752,7 @@ OpenCVの画像認識データを作成するために使うHTML
             //データをテーブルに反映
             writeDataToTable()
             {
-                let data = GBI.arr_path_file[this.folder];
+                let data = GBI.arr_path_file[GBI.folder];
                 for(var i = 0; i< data.length; i++)
                 {
                     if(data[i].opencv.x != null)
@@ -794,23 +779,24 @@ OpenCVの画像認識データを作成するために使うHTML
             writeCurrentData(data)
             {
                 let div = document.getElementById('rubberbandDiv');
-                let c = this.canvas;
+                let c = GBI.canvas;
                 
-                let o =  document.getElementById("box_canvas");                   
+                let o =  this.box_canvas;                   
 
                 if(data.opencv.x)
                 {
-                    div.style.top = data.opencv.y + c.offsetTop  - Math.round(o.scrollTop) + 'px';//this.rubberbandRectangle.top + 'px';
-                    div.style.left = data.opencv.x + c.offsetLeft - Math.round(o.scrollLeft) + 'px';//this.rubberbandRectangle.left + 'px';
-                    div.style.width = data.opencv.width + 'px';//this.rubberbandRectangle.width + 'px';
-                    div.style.height = data.opencv.height + 'px';//this.rubberbandRectangle.height + 'px';
+                    div.style.top = data.opencv.y + c.offsetTop  - Math.round(o.scrollTop) + 'px';
+                    div.style.left = data.opencv.x + c.offsetLeft - Math.round(o.scrollLeft) + 'px';
+                    div.style.width = data.opencv.width + 'px';
+                    div.style.height = data.opencv.height + 'px';
                     div.style.display = 'inline';
 
-                    
+                    //setRubberBandRectangle
+
                     ////////////////////cls_rbはmainの補正に依存している
                     //////rubberbandの一部はグローバルクラスにする必要あり
                     //これが無いと選択中の画像を変更したあとにスクロールすることでrubberbandがずれてしまう
-                    cls_rb.rubberbandRectangle = {
+                    GBI.cls_rb.rubberbandRectangle = {
                         top:data.opencv.y, 
                         left:data.opencv.x, 
                         width:data.opencv.width, 
@@ -821,15 +807,6 @@ OpenCVの画像認識データを作成するために使うHTML
                 {
                     div.style.display = 'none';
                 }
-            }
-
-            //現在イベント中のデータ
-            setNowEventObjNum(obj_data)
-            {
-                GBI.event_reference = obj_data;
-                //
-                GBI.arr_path_file = this.arr_path_file;
-                GBI.flag_read = true;
             }
 
             //イベント登録　キーボードでファイル選択
@@ -843,6 +820,7 @@ OpenCVの画像認識データを作成するために使うHTML
                     let n = GBI.event_reference.num_img;//現在のデータ（配列の番号）
                     let d = GBI.arr_path_file;//データ配列
 
+                    //////ここは無駄、条件だけでなく構造の見直しが必要
                     if(e.ctrlKey && e.keyCode == '38')//上
                     {
                         my.drawCanvasImage();
@@ -861,7 +839,7 @@ OpenCVの画像認識データを作成するために使うHTML
             setColorListTable()
             {
                 let id = this.event_file_id; //現在選択中のファイル
-                let l = this.arr_path_file[this.folder].length; //ファイル数
+                let l = GBI.arr_path_file[GBI.folder].length; //ファイル数
 
                 //オブジェクト
                 let arr = ['data_', 'x_', 'y_','width_','height_'];
@@ -882,7 +860,7 @@ OpenCVの画像認識データを作成するために使うHTML
             //クリックイベントの追加　 DataExplorer returnAtag
             setClickDrawImg()
             {
-                let lng = this.arr_path_file[this.folder].length;
+                let lng = GBI.arr_path_file[GBI.folder].length;
                 let my = this;
                 for(var i = 0; i < lng; i++)
                 {
@@ -903,7 +881,7 @@ OpenCVの画像認識データを作成するために使うHTML
             //キャンバスエリアのサイズ調節（スクロールバーの表示位置）
             setBoxCanvasWidth()
             {
-                document.getElementById("box_canvas").style.width = document.documentElement.clientWidth - 450 + 'px';
+                this.box_canvas.style.width = document.documentElement.clientWidth - 450 + 'px';
             }
 
             //データリストエリアのサイズ調節（スクロールバーの表示位置）
@@ -925,13 +903,11 @@ OpenCVの画像認識データを作成するために使うHTML
  
 
         ////ロード設定
-        let cls_rb, cls_dl, cls_expl, cls_cnv;
-        window.onload = function()
+         window.onload = function()
         {
-            //順序注意
-            cls_expl = new ClsDataExplorer("cls_expl");
-            cls_rb = new ClsRubberBand(cls_expl.canvas, cls_expl.context);
-            cls_dl = new ClsDownLoadData("btn_DLtxt");
+            GBI.cls_expl = new ClsDataExplorer("GBI.cls_expl");
+            GBI.cls_rb = new ClsRubberBand();
+            GBI.cls_dl = new ClsDownLoadData("btn_DLtxt");
         }
     </script>
 
